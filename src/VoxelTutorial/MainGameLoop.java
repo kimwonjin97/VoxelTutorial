@@ -1,9 +1,23 @@
 package VoxelTutorial;
 
+import RenderEngine.DisplayManager;
+import RenderEngine.MasterRenderer;
+import org.lwjgl.opengl.Display;
+
 public class MainGameLoop {
-    public class Main {
-        public static void main(String[] args) {
-            System.out.println("Hello world!");
+    public static void main(String[] args) {
+        DisplayManager.createDisplay();
+
+        MasterRenderer renderer = new MasterRenderer();
+
+        while(!Display.isCloseRequested())
+        {
+            renderer.prepare();
+
+            DisplayManager.updateDisplay();
+
+
         }
+        DisplayManager.closeDisplay();
     }
 }
