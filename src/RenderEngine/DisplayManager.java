@@ -1,5 +1,6 @@
 package RenderEngine;
 
+import VoxelTutorial.MainGameLoop;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -33,10 +34,15 @@ public class DisplayManager {
         while (Keyboard.next()) {
             if(Keyboard.getEventKeyState())
             {
+
+                if(Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
+                {
+                    closeDisplay();
+                }
                 if(Keyboard.isKeyDown(Keyboard.KEY_E) && Mouse.isGrabbed())
                 {
                     Mouse.setGrabbed(false);
-                } else {
+                } else if(Keyboard.isKeyDown(Keyboard.KEY_E) && !Mouse.isGrabbed()) {
                     Mouse.setGrabbed(true);
                 }
             }
@@ -44,6 +50,8 @@ public class DisplayManager {
         }
     }
     public static void closeDisplay() {
+
+        MainGameLoop.loader1.cleanUp();
         Display.destroy();
         System.exit(0);
     }
