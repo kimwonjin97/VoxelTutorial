@@ -1,6 +1,6 @@
 package RenderEngine;
 
-import Models.RawModel;
+import Models.TexturedModel;
 import org.lwjgl.opengl.GL11;
 
 public class MasterRenderer {
@@ -10,8 +10,8 @@ public class MasterRenderer {
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
     }
 
-    public void render(RawModel model) {
+    public void render(TexturedModel model) {
         EntityRenderer.render(model);
-        
+
     }
 }

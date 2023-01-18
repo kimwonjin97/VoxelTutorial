@@ -1,10 +1,12 @@
 package VoxelTutorial;
 
 import Models.RawModel;
+import Models.TexturedModel;
 import RenderEngine.DisplayManager;
 import RenderEngine.Loader;
 import RenderEngine.MasterRenderer;
 import Shaders.StaticShader;
+import Textures.ModelTexture;
 import org.lwjgl.opengl.Display;
 
 public class MainGameLoop {
@@ -32,17 +34,26 @@ public class MainGameLoop {
                 2, 3, 0
         };
 
-        RawModel model = loader1.loadToVAO(vertices, indices);
+        float[] uv = {
+                0, 0,
+                0, 1,
+                1, 1,
+                1, 0
+        };
+
+        RawModel model = loader1.loadToVAO(vertices, indices, uv);
+        ModelTexture texture = new ModelTexture(loader.loadTexture("dirtTex"));
+        TexturedModel texModel = new TexturedModel(model, texture);
 
         while(!Display.isCloseRequested())
         {
             renderer.prepare();
 
             shader.start();
-            renderer.render(model);
+            renderer.render(texModel);
             shader.stop();
-            DisplayManager.updateDisplay();
 
+            DisplayManager.updateDisplay();
 
         }
         DisplayManager.closeDisplay();
