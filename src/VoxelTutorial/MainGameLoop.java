@@ -1,5 +1,6 @@
 package VoxelTutorial;
 
+import Entities.Entity;
 import Models.RawModel;
 import Models.TexturedModel;
 import RenderEngine.DisplayManager;
@@ -8,6 +9,7 @@ import RenderEngine.MasterRenderer;
 import Shaders.StaticShader;
 import Textures.ModelTexture;
 import org.lwjgl.opengl.Display;
+import org.lwjgl.util.vector.Vector3f;
 
 public class MainGameLoop {
 
@@ -45,12 +47,18 @@ public class MainGameLoop {
         ModelTexture texture = new ModelTexture(loader.loadTexture("dirtTex"));
         TexturedModel texModel = new TexturedModel(model, texture);
 
+        Entity entity = new Entity(texModel, new Vector3f(0, 0, 0), 0, 0, 0 , 1);
+
         while(!Display.isCloseRequested())
         {
             renderer.prepare();
 
+            entity.increasePosition(0.001f, 0, 0);
+            entity.increaseScale(-0.001f);
+            entity.increaseRotation(0, 0, 0.01f);
+
             shader.start();
-            renderer.render(texModel);
+            renderer.render(entity, shader);
             shader.stop();
 
             DisplayManager.updateDisplay();

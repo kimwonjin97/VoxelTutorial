@@ -1,19 +1,26 @@
 package Shaders;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
+import org.lwjgl.util.vector.Matrix4f;
+import org.lwjgl.util.vector.Vector2f;
+import org.lwjgl.util.vector.Vector3f;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.FileReader;
+import java.nio.FloatBuffer;
 
 public abstract class ShaderProgram {
 
     int programID;
     int vertexShaderID;
     int fragmentShaderID;
+
+    FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(16);
 
     public ShaderProgram(String vertexFile, String fragmentFile) {
         programID = GL20.glCreateProgram();
@@ -25,9 +32,44 @@ public abstract class ShaderProgram {
         bindAttributes();
         GL20.glLinkProgram(programID);
         GL20.glValidateProgram(programID);
+
+    }
+    protected abstract void getAllUniformLocations();
+
+    protected int getUniformLocation(String varName) {
+        return GL20.glGetUniformLocation(programID, varName);
     }
 
     protected abstract void bindAttributes();
+
+    protected void loadFloat(int location, float value) {
+        GL20.glUniform1f(location, value);
+    }
+    protected void load2DVector(int location, Vector2f vec){
+        GL20.glUniform2f(location, vec.x, vec.y);
+    }
+
+    protected void load3DVector(int location, Vector3f vec){
+        GL20.glUniform3f(location, vec.x, vec.y, vec.z);
+    }
+
+    protected void loadMatrix(int location, Matrix4f mat) {
+
+        mat.store(matrixBuffer);
+        matrixBuffer.flip();
+
+        GL20.glUniformMatrix4(location, false, matrixBuffer);
+    }
+
+    protected void loadBoolean(int location, boolean bool) {
+
+        float value = 0;
+        if(bool) {
+            value = 1;
+        }
+
+        GL20.glUniform1f(location, value);
+    }
 
     protected void bindAttribute(String variableName, int attribute) {
         GL20.glBindAttribLocation(programID, attribute, variableName);
