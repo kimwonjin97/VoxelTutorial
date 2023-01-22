@@ -1,25 +1,36 @@
 package RenderEngine;
 
+import Entities.Camera;
 import Entities.Entity;
+import Models.TexturedModel;
 import Shaders.StaticShader;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Matrix4f;
 
-public class MasterRenderer {
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-    public MasterRenderer(StaticShader shader)
+public class MasterRenderer {
+    Matrix4f projectionMatrix;
+
+    private static final float FOV = 70f;
+    private static final float NEAR_PLANE = 0.1f;
+    private static final float FAR_PLANE = 10000f;
+
+    StaticShader shader = new StaticShader();
+    EntityRenderer renderer = new EntityRenderer();
+    Map<TexturedModel, List<Entity>> entities = new HashMap<TexturedModel, List<Entity>>();
+
+    public MasterRenderer()
     {
         createProjectionMatrix();
         shader.start();
         shader.loadProjectionMatrix(projectionMatrix);
         shader.stop();
     }
-    Matrix4f projectionMatrix;
-
-    private static final float FOV = 70f;
-    private static final float NEAR_PLANE = 0.1f;
-    private static final float FAR_PLANE = 10000f;
 
     public void prepare() {
         GL11.glEnable(GL11.GL_DEPTH_TEST);
@@ -27,8 +38,28 @@ public class MasterRenderer {
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
     }
 
-    public void render(Entity entity, StaticShader shader ) {
-        EntityRenderer.render(entity, shader);
+    public void render(Camera camera) {
+        prepare();
+        shader.start();
+        shader.loadViewMatrix(camera);
+        renderer.render(entities);
+
+        entities.clear();
+    }
+
+    public void addEntity(Entity entity) {
+
+        TexturedModel model = entity.getModel();
+
+        List<Entity> batch = entities.get(model);
+
+        if(batch != null){
+            batch.add(entity);
+        } else {
+            List<Entity> newBatch = new ArrayList<Entity>();
+            newBatch.add(entity);
+            entities.put(model, newBatch);
+        }
     }
 
     private void createProjectionMatrix() {
