@@ -12,10 +12,16 @@ import Textures.ModelTexture;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.util.vector.Vector3f;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainGameLoop {
 
     public static Loader loader1 = null;
     public static StaticShader shader1 = null;
+
+    static List<Entity> entities = new ArrayList<Entity>();
+
     public static void main(String[] args) {
         DisplayManager.createDisplay();
 
@@ -103,7 +109,13 @@ public class MainGameLoop {
         ModelTexture texture = new ModelTexture(loader.loadTexture("dirtTex"));
         TexturedModel texModel = new TexturedModel(model, texture);
 
-        Entity entity = new Entity(texModel, new Vector3f(0, 0, -1), 0, 0, 0 , 1);
+        for(int x = -10; x <10; ++x)
+        {
+            for(int z = -10; z < 10; ++z)
+            {
+                entities.add(new Entity(texModel, new Vector3f(x, 0, z), 0, 0, 0, 1));
+            }
+        }
 
         Camera camera = new Camera(new Vector3f(0,0,0), 0, 0, 0 );
 
@@ -111,13 +123,14 @@ public class MainGameLoop {
         {
             renderer.prepare();
 
-//            entity.increasePosition(0.001f, 0, 0);
-//            entity.increaseScale(-0.001f);
-//            entity.increaseRotation(0, 0, 0.01f);
             camera.move();
             shader.start();
             shader.loadViewMatrix(camera);
-            renderer.render(entity, shader);
+
+            for(Entity entity : entities)
+            {
+                renderer.render(entity, shader);
+            }
             shader.stop();
 
             DisplayManager.updateDisplay();
