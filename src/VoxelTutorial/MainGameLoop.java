@@ -13,6 +13,7 @@ import org.lwjgl.opengl.Display;
 import org.lwjgl.util.vector.Vector3f;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class MainGameLoop {
@@ -20,7 +21,12 @@ public class MainGameLoop {
     public static Loader loader1 = null;
     public static StaticShader shader1 = null;
 
-    static List<Entity> entities = new ArrayList<Entity>();
+    static List<Entity> entities = Collections.synchronizedList(new ArrayList<Entity>());
+    static Vector3f camPos = new Vector3f(0, 0, 0);
+    static List<Vector3f> usedPos = new ArrayList<Vector3f>();
+
+    static final int WORLD_SIZE = 2;
+
 
     public static void main(String[] args) {
         DisplayManager.createDisplay();
@@ -109,27 +115,100 @@ public class MainGameLoop {
         ModelTexture texture = new ModelTexture(loader.loadTexture("dirtTex"));
         TexturedModel texModel = new TexturedModel(model, texture);
 
-        for(int x = -10; x <10; ++x)
-        {
-            for(int z = -10; z < 10; ++z)
-            {
-                entities.add(new Entity(texModel, new Vector3f(x, 0, z), 0, 0, 0, 1));
-            }
-        }
+
 
         Camera camera = new Camera(new Vector3f(0,0,0), 0, 0, 0 );
 
+        new Thread(new Runnable() { public void run(){
+            while(!Display.isCloseRequested()){
+                for(int x = (int) (camPos.x - WORLD_SIZE); x < camPos.x; ++x)
+                {
+                    for(int z = (int) (camPos.z); z < camPos.z + WORLD_SIZE; ++z)
+                    {
+                        if(!usedPos.contains(new Vector3f(x, 0, z))) {
+                            entities.add(new Entity(texModel, new Vector3f(x, 0, z), 0, 0, 0, 1));
+                            usedPos.add(new Vector3f(x, 0, z));
+                        }
+                    }
+                }
+
+                for(int x = (int) (camPos.x ); x < camPos.x + WORLD_SIZE; ++x)
+                {
+                    for(int z = (int) (camPos.z); z < camPos.z + WORLD_SIZE; ++z)
+                    {
+                        if(!usedPos.contains(new Vector3f(x, 0, z))) {
+                            entities.add(new Entity(texModel, new Vector3f(x, 0, z), 0, 0, 0, 1));
+                            usedPos.add(new Vector3f(x, 0, z));
+                        }
+                    }
+                }
+            }
+        }}).start();
+
+        new Thread(new Runnable() { public void run(){
+            while(!Display.isCloseRequested()){
+                for(int x = (int) (camPos.x - WORLD_SIZE); x < camPos.x; ++x)
+                {
+                    for(int z = (int) (camPos.z - WORLD_SIZE); z < camPos.z; ++z)
+                    {
+                        if(!usedPos.contains(new Vector3f(x, 0, z))) {
+                            entities.add(new Entity(texModel, new Vector3f(x, 0, z), 0, 0, 0, 1));
+                            usedPos.add(new Vector3f(x, 0, z));
+                        }
+                    }
+                }
+
+                for(int x = (int) (camPos.x); x < camPos.x + WORLD_SIZE; ++x)
+                {
+                    for(int z = (int) (camPos.z-WORLD_SIZE); z < camPos.z; ++z)
+                    {
+                        if(!usedPos.contains(new Vector3f(x, 0, z))) {
+                            entities.add(new Entity(texModel, new Vector3f(x, 0, z), 0, 0, 0, 1));
+                            usedPos.add(new Vector3f(x, 0, z));
+                        }
+                    }
+                }
+            }
+        }}).start();
+
+        new Thread(new Runnable() { public void run() {
+
+            while(!Display.isCloseRequested()) {
+                for (int i=0; i<entities.size(); ++i){
+                    int distX = (int) (camPos.x - entities.get(i).getPosition().x);
+                    int distZ = (int) (camPos.z - entities.get(i).getPosition().z);
+
+                    if(distX < 0)
+                    {
+                        distX = -distX;
+                    }
+                    if(distZ < 0){
+                        distZ = - distZ;
+                    }
+
+                    if((distX > 10) || (distZ > 10))
+                    {
+                        usedPos.remove(entities.get(i).getPosition());
+                        entities.remove(i);
+                    }
+                }
+            }
+        }}).start();
+
         while(!Display.isCloseRequested())
         {
+            camera.move();
+            camPos = camera.getPosition();
+
+
             renderer.prepare();
 
-            camera.move();
             shader.start();
             shader.loadViewMatrix(camera);
 
-            for(Entity entity : entities)
+            for(int i = 0; i < entities.size(); ++i )
             {
-                renderer.render(entity, shader);
+                renderer.render(entities.get(i), shader);
             }
             shader.stop();
 
