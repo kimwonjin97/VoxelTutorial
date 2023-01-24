@@ -1,8 +1,10 @@
 package VoxelTutorial;
 
+import Chunks.Chunk;
+import Chunks.ChunkMesh;
+import Cube.Block;
 import Entities.Camera;
 import Entities.Entity;
-import Models.AtlasCubeModel;
 import Models.CubeModel;
 import Models.RawModel;
 import Models.TexturedModel;
@@ -11,9 +13,11 @@ import RenderEngine.Loader;
 import RenderEngine.MasterRenderer;
 import Shaders.StaticShader;
 import Textures.ModelTexture;
+import Toolbox.PerlinNoiseGenerator;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.util.vector.Vector3f;
 
+import javax.management.ValueExp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,9 +27,11 @@ public class MainGameLoop {
     public static Loader loader1 = null;
     public static StaticShader shader1 = null;
 
-    static List<Chunk> chunks = Collections.synchronizedList(new ArrayList<Chunk>());
+    static List<ChunkMesh> chunks = Collections.synchronizedList(new ArrayList<ChunkMesh>());
     static Vector3f camPos = new Vector3f(0, 0, 0);
     static List<Vector3f> usedPos = new ArrayList<Vector3f>();
+
+    static List<Entity> entities = new ArrayList<Entity>();
 
     static final int WORLD_SIZE = 5 * 16;
 
@@ -41,27 +47,32 @@ public class MainGameLoop {
 
 
 
-        RawModel model = loader1.loadToVAO(AtlasCubeModel.vertices, AtlasCubeModel.indices, AtlasCubeModel.uv);
-        ModelTexture texture = new ModelTexture(loader.loadTexture("grassTex"));
+        RawModel model = loader1.loadToVAO(CubeModel.vertices, CubeModel.indices, CubeModel.uv);
+        ModelTexture texture = new ModelTexture(loader.loadTexture("dirtTex"));
         TexturedModel texModel = new TexturedModel(model, texture);
 
 
         Camera camera = new Camera(new Vector3f(0, 0, 0), 0, 0, 0);
 
+
+        PerlinNoiseGenerator generator = new PerlinNoiseGenerator();
         new Thread(new Runnable() {
             public void run() {
                 while (!Display.isCloseRequested()) {
                     for (int x = (int) (camPos.x - WORLD_SIZE)/16; x < (camPos.x + WORLD_SIZE)/16; ++x) {
                         for (int z = (int) (camPos.z - WORLD_SIZE)/16; z < (camPos.z + WORLD_SIZE)/16; ++z) {
                             if (!usedPos.contains(new Vector3f(x*16, 0, z*16))) {
-                                List<Entity> blocks = new ArrayList<Entity>();
+                                List<Block> blocks = new ArrayList<Block>();
 
                                 for(int i=0;  i<16; ++i){
                                     for(int j=0; j<16; ++j){
-                                        blocks.add(new Entity(texModel, new Vector3f(x*16+i, 0, z*16+j), 0, 0, 0, 1));
+                                        blocks.add(new Block(i, (int) generator.generateHeight(i + x*16, j+z*16), j, Block.TYPE.DIRT));
                                     }
                                 }
-                                chunks.add(new Chunk(blocks, new Vector3f(x*16, 0, z*16)));
+
+                                Chunk chunk = new Chunk(blocks, new Vector3f(x*16, 0, z*16));
+                                ChunkMesh mesh = new ChunkMesh(chunk);
+                                chunks.add(mesh);
                                 usedPos.add(new Vector3f(x*16, 0, z*16));
                             }
                         }
@@ -70,15 +81,47 @@ public class MainGameLoop {
             }
         }).start();
 
+//        List<Block> blocks = new ArrayList<Block>();
+//
+//        for(int x = 0;  x < 10; ++x){
+//            for(int y =0 ; y < 10; ++y) {
+//                for(int z = 0; z < 10; ++z){
+//                    blocks.add(new Block(x, y, z, Block.TYPE.DIRT));
+//                }
+//            }
+//        }
+//
+//        Chunk chunk = new Chunk(blocks, new Vector3f(0, 0, 0));
+//        ChunkMesh mesh = new ChunkMesh(chunk);
+//
+//        RawModel model123 = loader.loadToVAO(mesh.positions, mesh.uvs);
+//        TexturedModel texModel123 = new TexturedModel(model123, texture);
+//        Entity entity = new Entity(texModel123, new Vector3f(0, 0, 0), 0, 0,0, 1);
 
+        //Main Game Loop
+        int index = 0;
         while (!Display.isCloseRequested()) {
             camera.move();
             camPos = camera.getPosition();
 
+            if (index < chunks.size()){
+                RawModel model123 = loader.loadToVAO(chunks.get(index).positions, chunks.get(index).uvs);
+                TexturedModel texModel123 = new TexturedModel(model123, texture);
+                Entity entity = new Entity(texModel123, chunks.get(index).chunk.origin, 0, 0,0, 1);
+                entities.add(entity);
 
-            for (int i = 0; i < chunks.size(); ++i) {
+                chunks.get(index).positions = null;
+                chunks.get(index).uvs = null;
+                chunks.get(index).normals = null;
 
-                Vector3f origin = chunks.get(i).getOrigin();
+
+                index++;
+            }
+
+
+            for (int i = 0; i < entities.size(); ++i) {
+
+                Vector3f origin = entities.get(i).getPosition();
                 int distX = (int) (camPos.x - origin.x);
                 int distZ = (int) (camPos.z - origin.z);
 
@@ -90,12 +133,10 @@ public class MainGameLoop {
                 }
 
                 if ((distX <= WORLD_SIZE) || (distZ <= WORLD_SIZE)) {
-                    for(int j=0; j<chunks.get(i).getBlocks().size(); ++j)
-                    {
-                        renderer.addEntity(chunks.get(i).getBlocks().get(j));
-                    }
+                    renderer.addEntity(entities.get(i));
                 }
             }
+            //renderer.addEntity(entity);
             renderer.render(camera);
 
             DisplayManager.updateDisplay();
