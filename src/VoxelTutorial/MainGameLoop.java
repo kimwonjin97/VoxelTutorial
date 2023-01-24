@@ -2,6 +2,7 @@ package VoxelTutorial;
 
 import Entities.Camera;
 import Entities.Entity;
+import Models.AtlasCubeModel;
 import Models.CubeModel;
 import Models.RawModel;
 import Models.TexturedModel;
@@ -26,7 +27,7 @@ public class MainGameLoop {
     static Vector3f camPos = new Vector3f(0, 0, 0);
     static List<Vector3f> usedPos = new ArrayList<Vector3f>();
 
-    static final int WORLD_SIZE = 50;
+    static final int WORLD_SIZE = 5 * 16;
 
 
     public static void main(String[] args) {
@@ -40,8 +41,8 @@ public class MainGameLoop {
 
 
 
-        RawModel model = loader1.loadToVAO(CubeModel.vertices, CubeModel.indices, CubeModel.uv);
-        ModelTexture texture = new ModelTexture(loader.loadTexture("dirtTex"));
+        RawModel model = loader1.loadToVAO(AtlasCubeModel.vertices, AtlasCubeModel.indices, AtlasCubeModel.uv);
+        ModelTexture texture = new ModelTexture(loader.loadTexture("grassTex"));
         TexturedModel texModel = new TexturedModel(model, texture);
 
 
