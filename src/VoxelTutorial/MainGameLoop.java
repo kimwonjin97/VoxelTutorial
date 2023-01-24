@@ -48,7 +48,7 @@ public class MainGameLoop {
 
 
         RawModel model = loader1.loadToVAO(CubeModel.vertices, CubeModel.indices, CubeModel.uv);
-        ModelTexture texture = new ModelTexture(loader.loadTexture("dirtTex"));
+        ModelTexture texture = new ModelTexture(loader.loadTexture("DefaultPack"));
         TexturedModel texModel = new TexturedModel(model, texture);
 
 
@@ -66,7 +66,7 @@ public class MainGameLoop {
 
                                 for(int i=0;  i<16; ++i){
                                     for(int j=0; j<16; ++j){
-                                        blocks.add(new Block(i, (int) generator.generateHeight(i + x*16, j+z*16), j, Block.TYPE.DIRT));
+                                        blocks.add(new Block(i, (int) generator.generateHeight(i + x*16, j+z*16), j, Block.GRASS));
                                     }
                                 }
 
